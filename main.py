@@ -46,6 +46,10 @@ class Project(BaseModel):
     github: Optional[str]
     image: Optional[str]
 
+
+@app.get("/")
+async def read_root():
+    return {"message": "Welcome to my portfolio API"}
 # Education endpoints
 @app.get("/education")
 async def get_all_education():
