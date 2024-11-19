@@ -1,9 +1,12 @@
 from datetime import datetime
 from typing import Optional, List
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException,Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client, Client
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -16,7 +19,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Setup templates
+templates = Jinja2Templates(directory="templates")
 # Supabase configuration
 SUPABASE_URL = "https://zvoagczrhwvanijcbgef.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2b2FnY3pyaHd2YW5pamNiZ2VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzIwMzc3MjgsImV4cCI6MjA0NzYxMzcyOH0.MdMH9NAKhBuOJcyMtKkPYV67qYBsr4MwbJNI0vbDV9Q"
@@ -50,6 +56,11 @@ class Skill(BaseModel):
     id: Optional[int] = None
     category: str
     name: str
+
+@app.get("/admin", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
 
 @app.get("/")
 async def read_root():
