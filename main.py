@@ -46,6 +46,10 @@ class Project(BaseModel):
     github: Optional[str]
     image: Optional[str]
 
+class Skill(BaseModel):
+    id: Optional[int] = None
+    category: str
+    name: str
 
 @app.get("/")
 async def read_root():
@@ -154,6 +158,54 @@ async def delete_project(project_id: int):
     if not response.data:
         raise HTTPException(status_code=404, detail="Project not found")
     return {"message": "Project deleted successfully"}
+
+# Skill endpoints
+@app.get("/skills")
+async def get_all_skills():
+    """Get all skills grouped by category"""
+    response = supabase.table("skills").select("*").execute()
+    
+    if not response.data:
+        return {}
+    
+    # Group skills by category
+    grouped_skills: Dict[str, List[str]] = {}
+    for skill in response.data:
+        category = skill['category']
+        if category not in grouped_skills:
+            grouped_skills[category] = []
+        grouped_skills[category].append(skill['name'])
+    
+    return grouped_skills
+
+@app.get("/skills/raw")
+async def get_raw_skills():
+    """Get all skills without grouping"""
+    response = supabase.table("skills").select("*").execute()
+    return response.data
+
+@app.get("/skills/{category}")
+async def get_skills_by_category(category: str):
+    """Get skills for a specific category"""
+    response = supabase.table("skills").select("*").eq("category", category).execute()
+    if not response.data:
+        raise HTTPException(status_code=404, detail=f"No skills found for category: {category}")
+    return [skill['name'] for skill in response.data]
+
+@app.post("/skills")
+async def create_skill(skill: Skill):
+    try:
+        response = supabase.table("skills").insert(skill.model_dump(exclude={'id'})).execute()
+        return response.data[0]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/skills/{skill_id}")
+async def delete_skill(skill_id: int):
+    response = supabase.table("skills").delete().eq("id", skill_id).execute()
+    if not response.data:
+        raise HTTPException(status_code=404, detail="Skill not found")
+    return {"message": "Skill deleted successfully"}
 
 if __name__ == "__main__":
     import uvicorn
