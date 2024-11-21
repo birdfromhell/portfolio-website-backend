@@ -61,7 +61,7 @@ class Contact(BaseModel):
         name: str
         email: str
         message: str
-        
+
 @app.get("/admin", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
@@ -222,6 +222,12 @@ async def delete_skill(skill_id: int):
     if not response.data:
         raise HTTPException(status_code=404, detail="Skill not found")
     return {"message": "Skill deleted successfully"}
+
+@app.get("/message")
+async def get_all_message():
+    response = supabase.table("contacts").select("*").execute()
+    return response.data
+
 @app.post("/webhook/contact")
 async def webhook_contact(contact: Contact):
         try:

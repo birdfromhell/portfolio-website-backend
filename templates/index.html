@@ -372,6 +372,7 @@
             <button class="tab" data-section="experience">Experience</button>
             <button class="tab" data-section="projects">Projects</button>
             <button class="tab" data-section="skills">Skills</button>
+            <button class="tab" data-section="messages">Messages</button>
         </div>
 
         <!-- Education Section -->
@@ -515,7 +516,23 @@
                 <tbody></tbody>
             </table>
         </div>
+        <div id="messages" class="section">
+            <h2>Messages</h2>
+            <table class="data-table" id="messageTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Message</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
+
+    
 
     <script>
         const API_URL = 'https://my-portfolio-api-8db1bddf3195.herokuapp.com';
@@ -769,12 +786,29 @@
                 loadSkills();
             }
         }
+        async function loadMessages() {
+        const response = await fetch(`${API_URL}/message`);
+        const data = await response.json();
+        const tbody = document.querySelector('#messageTable tbody');
+        tbody.innerHTML = '';
+        data.forEach(msg => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${msg.name}</td>
+                    <td>${msg.email}</td>
+                    <td>${msg.message}</td>
+                    <td>${new Date(msg.created_at).toLocaleString()}</td>
+                </tr>
+            `;
+        });
+    }
 
         // Initial load
         loadEducation();
         loadExperiences();
         loadProjects();
         loadSkills();
+        loadMessages();
 
         function showToast(message, type = 'success') {
     const toast = document.createElement('div');
@@ -868,11 +902,17 @@ function addSearchFunction(tableId, searchInputId) {
 
 // Initialize search for all tables
 window.onload = function() {
-    addSearchFunction('educationTable', 'educationSearch');
-    addSearchFunction('experienceTable', 'experienceSearch');
-    addSearchFunction('projectTable', 'projectSearch');
-    addSearchFunction('skillTable', 'skillSearch');
-};
+        loadEducation();
+        loadExperiences();
+        loadProjects();
+        loadSkills();
+        loadMessages();
+        addSearchFunction('educationTable', 'educationSearch');
+        addSearchFunction('experienceTable', 'experienceSearch');
+        addSearchFunction('projectTable', 'projectSearch');
+        addSearchFunction('skillTable', 'skillSearch');
+        addSearchFunction('messageTable', 'messageSearch');
+    };
     </script>
 </body>
 </html>
