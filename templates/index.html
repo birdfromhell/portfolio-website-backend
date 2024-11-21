@@ -364,6 +364,15 @@
     </style>
 </head>
 <body>
+    <div id="loginContainer" style="display: none;">
+        <h2>Login</h2>
+        <form id="loginForm" onsubmit="return login()">
+            <label for="pin">Enter PIN:</label>
+            <input type="password" id="pin" name="pin" required>
+            <button type="submit">Login</button>
+        </form>
+        <p id="loginMessage"></p>
+    </div>
     <div class="container">
         <h1 style="margin-bottom: 20px;">Portfolio Admin Panel</h1>
         
@@ -535,6 +544,29 @@
     
 
     <script>
+        const correctPin = "1234"; // Set your correct PIN here
+
+function login() {
+    const pinInput = document.getElementById('pin').value;
+    const loginMessage = document.getElementById('loginMessage');
+
+    if (pinInput === correctPin) {
+        loginMessage.textContent = "Login successful!";
+        loginMessage.style.color = "green";
+        document.getElementById('loginContainer').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+    } else {
+        loginMessage.textContent = "Incorrect PIN. Please try again.";
+        loginMessage.style.color = "red";
+    }
+
+    return false; // Prevent form submission
+}
+
+// Show login form on page load
+window.onload = function() {
+    document.getElementById('loginContainer').style.display = 'block';
+};
         const API_URL = 'https://my-portfolio-api-8db1bddf3195.herokuapp.com';
 
         // Tab switching
