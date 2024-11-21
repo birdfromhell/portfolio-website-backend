@@ -1,12 +1,14 @@
 from datetime import datetime
 from typing import Optional, List
-from fastapi import FastAPI, HTTPException,Request
+from fastapi import FastAPI, HTTPException,Request, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client, Client
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+import requests
+
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -146,6 +148,22 @@ async def get_all_projects():
     response = supabase.table("projects").select("*").execute()
     return response.data
 
+@app.post("/upload_image/")
+async def upload_image(file: UploadFile = File(...)):
+    try:
+        api_key = "977a4cec831e8db5c11f8e3d93efcab4"
+        response = requests.post(
+            "https://api.imgbb.com/1/upload",
+            params={"key": api_key},
+            files={"image": file.file}
+        )
+        response_data = response.json()
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail="Failed to upload image")
+        return {"image_url": response_data['data']['url']}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
 @app.get("/projects/{project_id}")
 async def get_project(project_id: int):
     response = supabase.table("projects").select("*").eq("id", project_id).execute()
@@ -153,21 +171,29 @@ async def get_project(project_id: int):
         raise HTTPException(status_code=404, detail="Project not found")
     return response.data[0]
 
+# Endpoint untuk membuat proyek dengan URL gambar yang diunggah
 @app.post("/projects")
-async def create_project(project: Project):
+async def create_project(project: Project, image: UploadFile = File(...)):
     try:
+        image_response = await upload_image(image)
+        project.image = image_response["image_url"]
         response = supabase.table("projects").insert(project.model_dump(exclude={'id'})).execute()
         return response.data[0]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# Endpoint untuk memperbarui proyek dengan URL gambar yang diunggah
 @app.put("/projects/{project_id}")
-async def update_project(project_id: int, project: Project):
-    response = supabase.table("projects").update(project.model_dump(exclude={'id'})).eq("id", project_id).execute()
-    if not response.data:
-        raise HTTPException(status_code=404, detail="Project not found")
-    return response.data[0]
-
+async def update_project(project_id: int, project: Project, image: UploadFile = File(...)):
+    try:
+        image_response = await upload_image(image)
+        project.image = image_response["image_url"]
+        response = supabase.table("projects").update(project.model_dump(exclude={'id'})).eq("id", project_id).execute()
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Project not found")
+        return response.data[0]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 @app.delete("/projects/{project_id}")
 async def delete_project(project_id: int):
     response = supabase.table("projects").delete().eq("id", project_id).execute()
