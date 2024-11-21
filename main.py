@@ -57,6 +57,11 @@ class Skill(BaseModel):
     category: str
     name: str
 
+class Contact(BaseModel):
+        name: str
+        email: str
+        message: str
+        
 @app.get("/admin", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
@@ -217,7 +222,19 @@ async def delete_skill(skill_id: int):
     if not response.data:
         raise HTTPException(status_code=404, detail="Skill not found")
     return {"message": "Skill deleted successfully"}
-
+@app.post("/webhook/contact")
+async def webhook_contact(contact: Contact):
+        try:
+            response = supabase.table("contacts").insert({
+                "name": contact.name,
+                "email": contact.email, 
+                "message": contact.message,
+                "created_at": datetime.now().isoformat()
+            }).execute()
+            return response.data[0]
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+    
