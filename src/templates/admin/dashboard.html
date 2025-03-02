@@ -1,0 +1,30 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Education</h3>
+            <p class="stat-number">{{ education_count }}</p>
+            <a href="{{ url_for('admin.manage_education') }}" class="manage-link">Manage</a>
+        </div>
+        <div class="stat-card">
+            <h3>Experience</h3>
+            <p class="stat-number">{{ experience_count }}</p>
+            <a href="{{ url_for('admin.manage_experience') }}" class="manage-link">Manage</a>
+        </div>
+        <div class="stat-card">
+            <h3>Projects</h3>
+            <p class="stat-number">{{ project_count }}</p>
+            <a href="{{ url_for('admin.manage_projects') }}" class="manage-link">Manage</a>
+        </div>
+        <div class="stat-card">
+            <h3>Skills</h3>
+            <p class="stat-number">{{ skill_count }}</p>
+            <a href="{{ url_for('admin.manage_skills') }}" class="manage-link">Manage</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
