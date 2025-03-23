@@ -11,10 +11,10 @@ def get_education():
         'degree': edu.degree,
         'institution': edu.institution,
         'period': edu.period,
-        'description': edu.description
+        'field': edu.description
     } for edu in education])
 
-@api.route('/experience', methods=['GET'])
+@api.route('/experiences', methods=['GET'])
 def get_experience():
     experiences = Experience.query.all()
     return jsonify([{
