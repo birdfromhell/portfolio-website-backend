@@ -1,0 +1,171 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Manage Skill Categories{% endblock %}
+
+{% block header %}Skill Categories{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <h2>Skill Categories Management</h2>
+    <button class="btn-add" data-toggle="modal" data-target="#addCategoryModal">
+        <i class="fas fa-plus"></i> Add New Category
+    </button>
+</div>
+
+<div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+
+<div class="table-container">
+    {% if categories %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Skills Count</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in categories %}
+                <tr>
+                    <td>{{ category.name }}</td>
+                    <td>{{ category.description|truncate(100) if category.description else "N/A" }}</td>
+                    <td>{{ category.skills|length }}</td>
+                    <td class="actions">
+                        <button class="btn-edit"
+                                onclick="openEditModal({{ category.id }}, '{{ category.name }}', '{{ category.description|replace("'", "\\'") if category.description else "" }}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <form method="POST" action="{{ url_for('admin.delete_skill_category', id=category.id) }}" class="delete-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn-delete" onclick="return confirm('Are you sure you want to delete this category? This will delete all skills in this category!')" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-folder"></i>
+            <p>No skill categories found</p>
+            <button class="btn-add" data-toggle="modal" data-target="#addCategoryModal">Add Category</button>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Add Category Modal -->
+<div id="addCategoryModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add New Category</h2>
+            <span class="close" data-dismiss="modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="addCategoryForm" method="POST" action="{{ url_for('admin.add_skill_category') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="name">Category Name <span class="required">*</span></label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="5"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-save"></i> Add Category
+                    </button>
+                    <button type="button" class="btn-cancel" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div id="editCategoryModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Category</h2>
+            <span class="close" data-dismiss="modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="editCategoryForm" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="edit_name">Category Name <span class="required">*</span></label>
+                    <input type="text" id="edit_name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_description">Description</label>
+                    <textarea id="edit_description" name="description" rows="5"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                    <button type="button" class="btn-cancel" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Get the modals
+    var addModal = document.getElementById("addCategoryModal");
+    var editModal = document.getElementById("editCategoryModal");
+
+    // Get all elements that close the modal
+    var closeButtons = document.querySelectorAll("[data-dismiss='modal']");
+
+    // Add event listeners to close buttons
+    closeButtons.forEach(function(button) {
+        button.addEventListener("click", function() {
+            addModal.style.display = "none";
+            editModal.style.display = "none";
+        });
+    });
+
+    // Open the add modal when the button is clicked
+    var addButtons = document.querySelectorAll("[data-target='#addCategoryModal']");
+    addButtons.forEach(function(button) {
+        button.addEventListener("click", function() {
+            addModal.style.display = "block";
+        });
+    });
+
+    // Function to open the edit modal with category data
+    function openEditModal(id, name, description) {
+        document.getElementById("editCategoryForm").action = "/admin/skill-categories/" + id + "/edit";
+        document.getElementById("edit_name").value = name;
+        document.getElementById("edit_description").value = description;
+        editModal.style.display = "block";
+    }
+
+    // Close the modal if user clicks outside of it
+    window.onclick = function(event) {
+        if (event.target == addModal) {
+            addModal.style.display = "none";
+        }
+        if (event.target == editModal) {
+            editModal.style.display = "none";
+        }
+    }
+</script>
+{% endblock %}

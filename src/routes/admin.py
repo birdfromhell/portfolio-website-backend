@@ -310,9 +310,154 @@ def delete_project(id):
 
     return redirect(url_for('admin.manage_projects'))
 
-# Skills management routes
+# Add these routes to the bottom of src/routes/admin.py
+
+# Skill Categories routes
+@admin.route('/skill-categories')
+@login_required
+def manage_skill_categories():
+    categories = SkillCategory.query.all()
+    return render_template('admin/skill_categories.html', categories=categories)
+
+@admin.route('/skill-categories/add', methods=['POST'])
+@login_required
+def add_skill_category():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        description = request.form.get('description')
+
+        if name:
+            # Check if category with this name already exists
+            existing = SkillCategory.query.filter_by(name=name).first()
+            if existing:
+                flash('A category with this name already exists', 'error')
+                return redirect(url_for('admin.manage_skill_categories'))
+                
+            new_category = SkillCategory(
+                name=name,
+                description=description
+            )
+
+            try:
+                db.session.add(new_category)
+                db.session.commit()
+                flash('Skill category added successfully!', 'success')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error adding skill category: {str(e)}', 'error')
+        else:
+            flash('Please provide a category name', 'error')
+
+        return redirect(url_for('admin.manage_skill_categories'))
+
+@admin.route('/skill-categories/<int:id>/edit', methods=['POST'])
+@login_required
+def edit_skill_category(id):
+    category = SkillCategory.query.get_or_404(id)
+
+    if request.method == 'POST':
+        name = request.form.get('name')
+        
+        # Check if another category has this name
+        if name != category.name and SkillCategory.query.filter_by(name=name).first():
+            flash('A category with this name already exists', 'error')
+            return redirect(url_for('admin.manage_skill_categories'))
+            
+        category.name = name
+        category.description = request.form.get('description')
+
+        try:
+            db.session.commit()
+            flash('Skill category updated successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating skill category: {str(e)}', 'error')
+
+    return redirect(url_for('admin.manage_skill_categories'))
+
+@admin.route('/skill-categories/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_skill_category(id):
+    category = SkillCategory.query.get_or_404(id)
+
+    # Check if category has skills
+    if category.skills and len(category.skills) > 0:
+        flash(f'Cannot delete category "{category.name}" because it contains skills. Delete the skills first.', 'error')
+        return redirect(url_for('admin.manage_skill_categories'))
+
+    try:
+        db.session.delete(category)
+        db.session.commit()
+        flash('Skill category deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting skill category: {str(e)}', 'error')
+
+    return redirect(url_for('admin.manage_skill_categories'))
+
+# Skills routes
+@admin.route('/skills/add', methods=['POST'])
+@login_required
+def add_skill():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        category_id = request.form.get('category_id')
+
+        if name and category_id:
+            new_skill = Skill(
+                name=name,
+                category_id=category_id
+            )
+
+            try:
+                db.session.add(new_skill)
+                db.session.commit()
+                flash('Skill added successfully!', 'success')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error adding skill: {str(e)}', 'error')
+        else:
+            flash('Please provide a skill name and category', 'error')
+
+        return redirect(url_for('admin.manage_skills'))
+
+@admin.route('/skills/<int:id>/edit', methods=['POST'])
+@login_required
+def edit_skill(id):
+    skill = Skill.query.get_or_404(id)
+
+    if request.method == 'POST':
+        skill.name = request.form.get('name')
+        skill.category_id = request.form.get('category_id')
+
+        try:
+            db.session.commit()
+            flash('Skill updated successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating skill: {str(e)}', 'error')
+
+    return redirect(url_for('admin.manage_skills'))
+
+@admin.route('/skills/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_skill(id):
+    skill = Skill.query.get_or_404(id)
+
+    try:
+        db.session.delete(skill)
+        db.session.commit()
+        flash('Skill deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting skill: {str(e)}', 'error')
+
+    return redirect(url_for('admin.manage_skills'))
+
+# Update the existing manage_skills route
 @admin.route('/skills')
 @login_required
 def manage_skills():
+    skills = Skill.query.all()
     categories = SkillCategory.query.all()
-    return render_template('admin/skills.html', categories=categories)
+    return render_template('admin/skills.html', skills=skills, categories=categories)

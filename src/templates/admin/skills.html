@@ -1,0 +1,324 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Manage Skills{% endblock %}
+
+{% block header %}Skills{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <h2>Skills Management</h2>
+    <div>
+        <button class="btn-add" data-toggle="modal" data-target="#addSkillCategoryModal">
+            <i class="fas fa-folder-plus"></i> Add Category
+        </button>
+        <button class="btn-add" data-toggle="modal" data-target="#addSkillModal">
+            <i class="fas fa-plus"></i> Add Skill
+        </button>
+    </div>
+</div>
+
+<div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+
+<!-- Categories Section -->
+<div class="table-container">
+    <h3>Skill Categories</h3>
+    {% if categories %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Category Name</th>
+                    <th>Description</th>
+                    <th>Skills Count</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in categories %}
+                <tr>
+                    <td>{{ category.name }}</td>
+                    <td>{{ category.description|truncate(100) if category.description else "N/A" }}</td>
+                    <td>{{ category.skills|length }}</td>
+                    <td class="actions">
+                        <button class="btn-edit" 
+                                onclick="openEditCategoryModal({{ category.id }}, '{{ category.name }}', '{{ category.description|replace("'", "\\'") if category.description else "" }}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <form method="POST" action="{{ url_for('admin.delete_skill_category', id=category.id) }}" class="delete-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn-delete" onclick="return confirm('Are you sure you want to delete this category? All associated skills will also be deleted.')" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-folder"></i>
+            <p>No skill categories found</p>
+            <button class="btn-add" data-toggle="modal" data-target="#addSkillCategoryModal">Add Category</button>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Skills Section -->
+<div class="table-container" style="margin-top: 2rem;">
+    <h3>Skills</h3>
+    {% if skills %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Skill Name</th>
+                    <th>Category</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for skill in skills %}
+                <tr>
+                    <td>{{ skill.name }}</td>
+                    <td>{{ skill.category_ref.name }}</td>
+                    <td class="actions">
+                        <button class="btn-edit" 
+                                onclick="openEditSkillModal({{ skill.id }}, '{{ skill.name }}', {{ skill.category_id }})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <form method="POST" action="{{ url_for('admin.delete_skill', id=skill.id) }}" class="delete-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn-delete" onclick="return confirm('Are you sure you want to delete this skill?')" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-code"></i>
+            <p>No skills found</p>
+            <button class="btn-add" data-toggle="modal" data-target="#addSkillModal" {% if not categories %}disabled{% endif %}>
+                Add Skill
+            </button>
+            {% if not categories %}
+                <p class="text-muted">You need to create a category first</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<!-- Add Skill Category Modal -->
+<div id="addSkillCategoryModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add New Category</h2>
+            <span class="close" data-dismiss="modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="addCategoryForm" method="POST" action="{{ url_for('admin.add_skill_category') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="name">Category Name <span class="required">*</span></label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="4"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-save"></i> Add Category
+                    </button>
+                    <button type="button" class="btn-cancel" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Skill Category Modal -->
+<div id="editSkillCategoryModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Category</h2>
+            <span class="close" data-dismiss="modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="editCategoryForm" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="edit_name">Category Name <span class="required">*</span></label>
+                    <input type="text" id="edit_name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_description">Description</label>
+                    <textarea id="edit_description" name="description" rows="4"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                    <button type="button" class="btn-cancel" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Skill Modal -->
+<div id="addSkillModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add New Skill</h2>
+            <span class="close" data-dismiss="modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="addSkillForm" method="POST" action="{{ url_for('admin.add_skill') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="skill_name">Skill Name <span class="required">*</span></label>
+                    <input type="text" id="skill_name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="category_id">Category <span class="required">*</span></label>
+                    <select id="category_id" name="category_id" required>
+                        <option value="">Select a category</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-save"></i> Add Skill
+                    </button>
+                    <button type="button" class="btn-cancel" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Skill Modal -->
+<div id="editSkillModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Skill</h2>
+            <span class="close" data-dismiss="modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="editSkillForm" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="edit_skill_name">Skill Name <span class="required">*</span></label>
+                    <input type="text" id="edit_skill_name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_category_id">Category <span class="required">*</span></label>
+                    <select id="edit_category_id" name="category_id" required>
+                        <option value="">Select a category</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                    <button type="button" class="btn-cancel" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Get all modals
+    var addCategoryModal = document.getElementById("addSkillCategoryModal");
+    var editCategoryModal = document.getElementById("editSkillCategoryModal");
+    var addSkillModal = document.getElementById("addSkillModal");
+    var editSkillModal = document.getElementById("editSkillModal");
+
+    // Get all elements that close the modal
+    var closeButtons = document.querySelectorAll("[data-dismiss='modal']");
+
+    // Add event listeners to close buttons
+    closeButtons.forEach(function(button) {
+        button.addEventListener("click", function() {
+            addCategoryModal.style.display = "none";
+            editCategoryModal.style.display = "none";
+            addSkillModal.style.display = "none";
+            editSkillModal.style.display = "none";
+        });
+    });
+
+    // Open the add modals when the buttons are clicked
+    var addCategoryButtons = document.querySelectorAll("[data-target='#addSkillCategoryModal']");
+    addCategoryButtons.forEach(function(button) {
+        button.addEventListener("click", function() {
+            addCategoryModal.style.display = "block";
+        });
+    });
+
+    var addSkillButtons = document.querySelectorAll("[data-target='#addSkillModal']");
+    addSkillButtons.forEach(function(button) {
+        button.addEventListener("click", function() {
+            if (!button.disabled) {
+                addSkillModal.style.display = "block";
+            }
+        });
+    });
+
+    // Function to open the edit category modal
+    function openEditCategoryModal(id, name, description) {
+        document.getElementById("editCategoryForm").action = "/admin/skill-categories/" + id + "/edit";
+        document.getElementById("edit_name").value = name;
+        document.getElementById("edit_description").value = description;
+        editCategoryModal.style.display = "block";
+    }
+
+    // Function to open the edit skill modal
+    function openEditSkillModal(id, name, categoryId) {
+        document.getElementById("editSkillForm").action = "/admin/skills/" + id + "/edit";
+        document.getElementById("edit_skill_name").value = name;
+        document.getElementById("edit_category_id").value = categoryId;
+        editSkillModal.style.display = "block";
+    }
+
+    // Close the modal if user clicks outside of it
+    window.onclick = function(event) {
+        if (event.target == addCategoryModal) {
+            addCategoryModal.style.display = "none";
+        }
+        if (event.target == editCategoryModal) {
+            editCategoryModal.style.display = "none";
+        }
+        if (event.target == addSkillModal) {
+            addSkillModal.style.display = "none";
+        }
+        if (event.target == editSkillModal) {
+            editSkillModal.style.display = "none";
+        }
+    }
+</script>
+{% endblock %}
