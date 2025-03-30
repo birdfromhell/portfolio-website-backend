@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, redirect, url_for
 from flask_wtf.csrf import CSRFProtect
 from src.models.models import db
 from src.routes.api import api
@@ -59,6 +59,11 @@ def create_app():
     # Register blueprints
     app.register_blueprint(api, url_prefix='/api')
     app.register_blueprint(admin, url_prefix='/admin')
+    
+    # Add root URL redirect to admin dashboard
+    @app.route('/')
+    def index():
+        return redirect(url_for('admin.dashboard'))
     
     with app.app_context():
         db.create_all()
