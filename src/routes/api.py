@@ -32,9 +32,9 @@ def get_projects():
         'id': proj.id,
         'title': proj.title,
         'description': proj.description,
-        'image_url': proj.image_url,
-        'project_url': proj.project_url,
-        'github_url': proj.github_url,
+        'image': proj.image_url,
+        'preview': proj.project_url,
+        'github': proj.github_url,
         'created_at': proj.created_at.isoformat()
     } for proj in projects])
 

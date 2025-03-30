@@ -373,7 +373,7 @@ def edit_skill_category(id):
             db.session.rollback()
             flash(f'Error updating skill category: {str(e)}', 'error')
 
-    return redirect(url_for('admin.manage_skill_categories'))
+    return redirect(url_for('admin.manage_skill'))
 
 @admin.route('/skill-categories/<int:id>/delete', methods=['POST'])
 @login_required
@@ -393,7 +393,7 @@ def delete_skill_category(id):
         db.session.rollback()
         flash(f'Error deleting skill category: {str(e)}', 'error')
 
-    return redirect(url_for('admin.manage_skill_categories'))
+    return redirect(url_for('admin.manage_skills'))
 
 # Skills routes
 @admin.route('/skills/add', methods=['POST'])
