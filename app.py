@@ -63,8 +63,10 @@ def create_app():
     with app.app_context():
         db.create_all()
     
-    return app
+    return app  # Return the app object, not flask_app
+
+# Create a global flask application instance for WSGI servers to use
+flask_app = create_app()
 
 if __name__ == '__main__':
-    app = create_app()
-    app.run(debug=True)
+    flask_app.run(debug=True)
