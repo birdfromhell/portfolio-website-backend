@@ -331,7 +331,7 @@ def add_skill_category():
             existing = SkillCategory.query.filter_by(name=name).first()
             if existing:
                 flash('A category with this name already exists', 'error')
-                return redirect(url_for('admin.manage_skill_categories'))
+                return redirect(url_for('admin.manage_skills'))
                 
             new_category = SkillCategory(
                 name=name,
@@ -348,7 +348,7 @@ def add_skill_category():
         else:
             flash('Please provide a category name', 'error')
 
-        return redirect(url_for('admin.manage_skill_categories'))
+        return redirect(url_for('admin.manage_skills'))
 
 @admin.route('/skill-categories/<int:id>/edit', methods=['POST'])
 @login_required
@@ -361,7 +361,7 @@ def edit_skill_category(id):
         # Check if another category has this name
         if name != category.name and SkillCategory.query.filter_by(name=name).first():
             flash('A category with this name already exists', 'error')
-            return redirect(url_for('admin.manage_skill_categories'))
+            return redirect(url_for('admin.manage_skills'))
             
         category.name = name
         category.description = request.form.get('description')
@@ -373,7 +373,7 @@ def edit_skill_category(id):
             db.session.rollback()
             flash(f'Error updating skill category: {str(e)}', 'error')
 
-    return redirect(url_for('admin.manage_skill'))
+    return redirect(url_for('admin.manage_skills'))
 
 @admin.route('/skill-categories/<int:id>/delete', methods=['POST'])
 @login_required
@@ -383,7 +383,7 @@ def delete_skill_category(id):
     # Check if category has skills
     if category.skills and len(category.skills) > 0:
         flash(f'Cannot delete category "{category.name}" because it contains skills. Delete the skills first.', 'error')
-        return redirect(url_for('admin.manage_skill_categories'))
+        return redirect(url_for('admin.manage_skills'))
 
     try:
         db.session.delete(category)
